@@ -1,0 +1,5 @@
+node_modules/
+server/agendamentos.json
+server/agendamentos.db
+dist/
+.env
