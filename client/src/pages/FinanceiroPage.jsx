@@ -108,9 +108,14 @@ export default function FinanceiroPage() {
     })
   }, [agendamentos, anoFiltro, mesFiltro])
 
-  // Cancelados: somente os que têm adiantamento (valor retido)
+  // Cancelados: somente os que têm algum adiantamento retido
   const canceladosComAdiantamento = useMemo(
-    () => filtrados.filter(a => a.status === 'cancelado' && a.adiantamento && a.valor_adiantamento != null),
+    () => filtrados.filter(a =>
+      a.status === 'cancelado' && (
+        (a.adiantamento && a.valor_adiantamento != null) ||
+        (a.adiantamento_penteado && a.valor_adiantamento_penteado != null)
+      )
+    ),
     [filtrados]
   )
 
@@ -141,7 +146,7 @@ export default function FinanceiroPage() {
   const countPenteado = ativos.filter(a => a.penteado).length
 
   const totalAdiantamentosRetidos = canceladosComAdiantamento.reduce(
-    (s, a) => s + a.valor_adiantamento, 0
+    (s, a) => s + (a.valor_adiantamento ?? 0) + (a.valor_adiantamento_penteado ?? 0), 0
   )
 
   return (
@@ -211,17 +216,24 @@ export default function FinanceiroPage() {
                     <tr>
                       <th>Nome</th>
                       <th>Data</th>
-                      <th>Adiantamento retido</th>
+                      <th>Adiant. maquiagem</th>
+                      <th>Adiant. penteado</th>
+                      <th>Total retido</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {canceladosComAdiantamento.map(ag => (
-                      <tr key={ag.id}>
-                        <td>{ag.nome}</td>
-                        <td>{formatDate(ag.data)}</td>
-                        <td><span className="icon-yes">{fmt(ag.valor_adiantamento)}</span></td>
-                      </tr>
-                    ))}
+                    {canceladosComAdiantamento.map(ag => {
+                      const totalRetido = (ag.valor_adiantamento ?? 0) + (ag.valor_adiantamento_penteado ?? 0)
+                      return (
+                        <tr key={ag.id}>
+                          <td>{ag.nome}</td>
+                          <td>{formatDate(ag.data)}</td>
+                          <td>{ag.valor_adiantamento != null ? <span className="icon-yes">{fmt(ag.valor_adiantamento)}</span> : <span className="icon-no">—</span>}</td>
+                          <td>{ag.valor_adiantamento_penteado != null ? <span className="icon-yes">{fmt(ag.valor_adiantamento_penteado)}</span> : <span className="icon-no">—</span>}</td>
+                          <td><strong>{fmt(totalRetido)}</strong></td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

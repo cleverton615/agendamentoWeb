@@ -10,6 +10,9 @@ const emptyForm = {
   penteado: false,
   valor_penteado: '',
   nome_penteadista: '',
+  adiantamento_penteado: false,
+  valor_adiantamento_penteado: '',
+  observacoes: '',
 }
 
 export default function AppointmentForm({ onSubmit }) {
@@ -29,6 +32,14 @@ export default function AppointmentForm({ onSubmit }) {
         penteado: checked,
         valor_penteado: checked ? prev.valor_penteado : '',
         nome_penteadista: checked ? prev.nome_penteadista : '',
+        adiantamento_penteado: checked ? prev.adiantamento_penteado : false,
+        valor_adiantamento_penteado: checked ? prev.valor_adiantamento_penteado : '',
+      }))
+    } else if (name === 'adiantamento_penteado') {
+      setForm(prev => ({
+        ...prev,
+        adiantamento_penteado: checked,
+        valor_adiantamento_penteado: checked ? prev.valor_adiantamento_penteado : '',
       }))
     } else {
       setForm(prev => ({
@@ -63,6 +74,10 @@ export default function AppointmentForm({ onSubmit }) {
         : null,
       nome_penteadista: form.penteado && form.nome_penteadista.trim() !== ''
         ? form.nome_penteadista.trim()
+        : null,
+      adiantamento_penteado: form.penteado ? form.adiantamento_penteado : false,
+      valor_adiantamento_penteado: form.penteado && form.adiantamento_penteado && form.valor_adiantamento_penteado !== ''
+        ? parseFloat(form.valor_adiantamento_penteado)
         : null,
     })
     setForm(emptyForm)
@@ -186,11 +201,50 @@ export default function AppointmentForm({ onSubmit }) {
                   value={form.nome_penteadista}
                   onChange={handleChange}
                   className="input-penteadista"
-                  autoFocus
                 />
+                <div className="checkbox-with-value">
+                  <label className="checkbox-group">
+                    <input
+                      name="adiantamento_penteado"
+                      type="checkbox"
+                      checked={form.adiantamento_penteado}
+                      onChange={handleChange}
+                    />
+                    Adiantamento pago
+                  </label>
+                  {form.adiantamento_penteado && (
+                    <div className="valor-adiantamento">
+                      <span className="currency-prefix">R$</span>
+                      <input
+                        name="valor_adiantamento_penteado"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0,00"
+                        value={form.valor_adiantamento_penteado}
+                        onChange={handleChange}
+                        className="input-valor"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="observacoes">Observações</label>
+          <textarea
+            id="observacoes"
+            name="observacoes"
+            placeholder="Anotações sobre a cliente ou atendimento..."
+            value={form.observacoes}
+            onChange={handleChange}
+            className="input-obs"
+            rows={3}
+          />
         </div>
 
         <button type="submit" className="btn-submit">Salvar</button>

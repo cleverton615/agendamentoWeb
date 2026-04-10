@@ -286,10 +286,6 @@ h1 {
 }
 
 /* ── Lista ── */
-.list-section h2 {
-  font-size: 1.05rem;
-  color: #c97b84;
-}
 
 .table-wrapper {
   overflow-x: auto;
@@ -580,3 +576,343 @@ tbody td {
 .btn-confirm-no:hover {
   background-color: #f5e0e3;
 }
+
+/* ── Cabeçalho da lista + CSV ── */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.list-header h2 {
+  font-size: 1.05rem;
+  color: #c97b84;
+}
+
+.btn-ver-todos {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px;
+  background: none;
+  border: 1px dashed #e8b8bf;
+  border-radius: 8px;
+  color: #a06070;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.btn-ver-todos:hover {
+  background-color: #fff0f2;
+  color: #c97b84;
+}
+
+.btn-csv {
+  background: none;
+  border: 1px solid #e8b8bf;
+  border-radius: 6px;
+  color: #7a4d55;
+  padding: 5px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.btn-csv:hover {
+  background-color: #f5e0e3;
+  color: #3a2a2d;
+}
+
+/* ── Filtros da lista ── */
+.list-filters {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #f0d0d5;
+  border-radius: 10px;
+}
+
+.list-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.list-filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #7a4d55;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.list-filter-group select,
+.list-filter-group input[type="date"] {
+  padding: 7px 10px;
+  border: 1px solid #e8b8bf;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #3a2a2d;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.list-filter-group select:focus,
+.list-filter-group input[type="date"]:focus {
+  border-color: #c97b84;
+}
+
+.list-filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding-bottom: 1px;
+}
+
+.btn-filtro-hoje {
+  background-color: #f5e0e3;
+  border: 1px solid #e8b8bf;
+  border-radius: 8px;
+  color: #7a4d55;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-filtro-hoje:hover {
+  background-color: #ecc8ce;
+}
+
+.btn-filtro-limpar {
+  background: none;
+  border: 1px solid #e8b8bf;
+  border-radius: 8px;
+  color: #a06070;
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-filtro-limpar:hover {
+  background-color: #fde8ea;
+}
+
+/* ── Colunas ordenáveis ── */
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.th-sortable:hover {
+  background-color: #ead0d5;
+}
+
+.sort-icon {
+  font-size: 0.75rem;
+  margin-left: 4px;
+  color: #c97b84;
+}
+
+.sort-inactive {
+  color: #cba0a8;
+}
+
+/* ── Linha de hoje ── */
+.row-hoje {
+  border-left: 3px solid #c97b84;
+}
+
+.row-hoje td:first-child {
+  font-weight: 600;
+}
+
+.badge-hoje {
+  display: inline-block;
+  background-color: #c97b84;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.3px;
+}
+
+/* ── Observações ── */
+.obs-cell {
+  text-align: center;
+}
+
+.obs-icon {
+  cursor: default;
+  font-size: 1rem;
+}
+
+.input-obs {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #e8b8bf;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  color: #3a2a2d;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.input-obs:focus {
+  border-color: #c97b84;
+}
+
+/* ── Botão editar + ações da linha ── */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.btn-edit {
+  background: none;
+  border: 1px solid #d0a8b0;
+  border-radius: 6px;
+  color: #7a4d55;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-edit:hover {
+  background-color: #f5e0e3;
+  color: #3a2a2d;
+}
+
+/* ── Modal de edição ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(58, 42, 45, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(58, 42, 45, 0.18);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-size: 1.1rem;
+  color: #c97b84;
+  font-weight: 700;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #a06070;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+
+.modal-close:hover {
+  background-color: #f5e0e3;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-cancel-modal {
+  background: none;
+  border: 1px solid #e8b8bf;
+  border-radius: 8px;
+  color: #7a4d55;
+  padding: 9px 20px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-cancel-modal:hover {
+  background-color: #f5e0e3;
+}
+
+/* ── Toast ── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+}
+
+.toast {
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  animation: toast-in 0.25s ease;
+}
+
+.toast-success {
+  background-color: #d1f5e0;
+  color: #1a6636;
+  border: 1px solid #a8e6c0;
+}
+
+.toast-error {
+  background-color: #fde8ea;
+  color: #9b2a35;
+  border: 1px solid #f0b0b8;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+

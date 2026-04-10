@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 function formatDate(dateStr) {
   const [year, month, day] = dateStr.split('-')
@@ -9,116 +9,296 @@ function formatValor(valor) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-const STATUS_LABEL = {
-  pendente:  'Pendente',
-  realizado: 'Realizado',
-  cancelado: 'Cancelado',
+function SortIcon({ sortKey, col, sortDir }) {
+  if (sortKey !== col) return <span className="sort-icon sort-inactive">⇅</span>
+  return <span className="sort-icon">{sortDir === 'asc' ? '↑' : '↓'}</span>
 }
 
-export default function AppointmentList({ agendamentos, onDelete, onUpdateStatus, loading }) {
+export default function AppointmentList({ agendamentos, onDelete, onUpdateStatus, onEdit, loading }) {
   const [confirmId, setConfirmId] = useState(null)
+  const [filtroStatus, setFiltroStatus] = useState('')
+  const [filtroDataInicio, setFiltroDataInicio] = useState('')
+  const [filtroDataFim, setFiltroDataFim] = useState('')
+  const [sortKey, setSortKey] = useState('data')
+  const [sortDir, setSortDir] = useState('asc')
+  const [mostrarTodos, setMostrarTodos] = useState(false)
 
-  function handleDeleteClick(id) {
-    setConfirmId(id)
+  const hoje = new Date().toISOString().split('T')[0]
+
+  function toggleSort(key) {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
   }
 
-  function handleConfirm(id) {
-    setConfirmId(null)
-    onDelete(id)
+  function setHoje() {
+    setFiltroDataInicio(hoje)
+    setFiltroDataFim(hoje)
   }
 
-  function handleCancel() {
-    setConfirmId(null)
+  function limparFiltros() {
+    setFiltroStatus('')
+    setFiltroDataInicio('')
+    setFiltroDataFim('')
+  }
+
+  const filtrados = useMemo(() => {
+    return agendamentos.filter(a => {
+      if (filtroStatus && a.status !== filtroStatus) return false
+      if (filtroDataInicio && a.data < filtroDataInicio) return false
+      if (filtroDataFim && a.data > filtroDataFim) return false
+      return true
+    })
+  }, [agendamentos, filtroStatus, filtroDataInicio, filtroDataFim])
+
+  const ordenados = useMemo(() => {
+    return [...filtrados].sort((a, b) => {
+      let va, vb
+      if (sortKey === 'nome') {
+        va = a.nome.toLowerCase(); vb = b.nome.toLowerCase()
+      } else if (sortKey === 'status') {
+        va = a.status ?? 'pendente'; vb = b.status ?? 'pendente'
+      } else {
+        va = a.data + 'T' + a.hora; vb = b.data + 'T' + b.hora
+      }
+      const cmp = va.localeCompare(vb)
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [filtrados, sortKey, sortDir])
+
+  const temFiltroAtivo = filtroStatus || filtroDataInicio || filtroDataFim
+
+  // Preview: próximos agendamentos primeiro, depois passados mais recentes, limite de 5
+  const preview = useMemo(() => {
+    const futuros = ordenados.filter(a => a.data >= hoje)
+    const passados = [...ordenados.filter(a => a.data < hoje)].reverse()
+    return [...futuros, ...passados].slice(0, 5)
+  }, [ordenados, hoje])
+
+  // Quando há filtro ativo, mostra tudo; senão respeita o limite de 5
+  const visiveis = temFiltroAtivo || mostrarTodos ? ordenados : preview
+
+  function exportCSV() {
+    const header = ['Nome', 'Data', 'Horário', 'Valor Maquiagem', 'Adiantamento', 'Penteado', 'Valor Penteado', 'Penteadista', 'Adiant. Penteado', 'Status', 'Observações']
+    const rows = ordenados.map(ag => [
+      ag.nome,
+      formatDate(ag.data),
+      ag.hora,
+      ag.valor_maquiagem != null ? ag.valor_maquiagem : '',
+      ag.adiantamento ? (ag.valor_adiantamento != null ? ag.valor_adiantamento : 'Sim') : 'Não',
+      ag.penteado ? 'Sim' : 'Não',
+      ag.valor_penteado != null ? ag.valor_penteado : '',
+      ag.nome_penteadista ?? '',
+      ag.adiantamento_penteado ? (ag.valor_adiantamento_penteado != null ? ag.valor_adiantamento_penteado : 'Sim') : 'Não',
+      ag.status ?? 'pendente',
+      ag.observacoes ?? '',
+    ])
+    const csv = [header, ...rows]
+      .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `agendamentos_${hoje}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
     <div className="list-section">
-      <h2>Agendamentos</h2>
+      <div className="list-header">
+        <h2>Agendamentos</h2>
+        {agendamentos.length > 0 && (
+          <button className="btn-csv" onClick={exportCSV} title="Exportar para CSV">
+            ↓ CSV
+          </button>
+        )}
+      </div>
+
+      <div className="list-filters">
+        <div className="list-filter-group">
+          <label htmlFor="fil-status">Status</label>
+          <select id="fil-status" value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
+            <option value="">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="realizado">Realizado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+        <div className="list-filter-group">
+          <label htmlFor="fil-inicio">De</label>
+          <input
+            id="fil-inicio"
+            type="date"
+            value={filtroDataInicio}
+            onChange={e => setFiltroDataInicio(e.target.value)}
+          />
+        </div>
+        <div className="list-filter-group">
+          <label htmlFor="fil-fim">Até</label>
+          <input
+            id="fil-fim"
+            type="date"
+            value={filtroDataFim}
+            onChange={e => setFiltroDataFim(e.target.value)}
+          />
+        </div>
+        <div className="list-filter-actions">
+          <button className="btn-filtro-hoje" onClick={setHoje}>Hoje</button>
+          {temFiltroAtivo && (
+            <button className="btn-filtro-limpar" onClick={limparFiltros}>Limpar</button>
+          )}
+        </div>
+      </div>
 
       {loading && <div className="loading-msg">Carregando...</div>}
 
-      {!loading && agendamentos.length === 0 && (
-        <div className="empty-msg">Nenhum agendamento encontrado.</div>
+      {!loading && ordenados.length === 0 && (
+        <div className="empty-msg">
+          {agendamentos.length === 0
+            ? 'Nenhum agendamento encontrado.'
+            : 'Nenhum resultado para os filtros aplicados.'}
+        </div>
       )}
 
-      {!loading && agendamentos.length > 0 && (
+      {!loading && ordenados.length > 0 && (
         <div className="table-wrapper">
           <table>
             <thead>
               <tr>
-                <th>Nome</th>
-                <th>Data</th>
+                <th className="th-sortable" onClick={() => toggleSort('nome')}>
+                  Nome <SortIcon sortKey={sortKey} col="nome" sortDir={sortDir} />
+                </th>
+                <th className="th-sortable" onClick={() => toggleSort('data')}>
+                  Data <SortIcon sortKey={sortKey} col="data" sortDir={sortDir} />
+                </th>
                 <th>Horário</th>
                 <th>Maquiagem</th>
                 <th>Adiantamento</th>
                 <th>Penteado</th>
-                <th>Status</th>
+                <th className="th-sortable" onClick={() => toggleSort('status')}>
+                  Status <SortIcon sortKey={sortKey} col="status" sortDir={sortDir} />
+                </th>
+                <th>Obs</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {agendamentos.map(ag => (
-                <tr key={ag.id} className={ag.status === 'cancelado' ? 'row-cancelado' : ''}>
-                  <td>{ag.nome}</td>
-                  <td>{formatDate(ag.data)}</td>
-                  <td>{ag.hora}</td>
-                  <td>
-                    {ag.valor_maquiagem != null
-                      ? <span className="icon-yes">{formatValor(ag.valor_maquiagem)}</span>
-                      : <span className="icon-no">—</span>
-                    }
-                  </td>
-                  <td>
-                    {ag.adiantamento
-                      ? ag.valor_adiantamento != null
-                        ? <span className="icon-yes">{formatValor(ag.valor_adiantamento)}</span>
-                        : <span className="icon-yes">✓</span>
-                      : <span className="icon-no">—</span>
-                    }
-                  </td>
-                  <td>
-                    {ag.penteado
-                      ? <span className="icon-yes">
-                          {ag.valor_penteado != null ? formatValor(ag.valor_penteado) : '✓'}
-                          {ag.nome_penteadista && (
-                            <span className="sub-info">{ag.nome_penteadista}</span>
-                          )}
-                        </span>
-                      : <span className="icon-no">—</span>
-                    }
-                  </td>
-                  <td>
-                    <select
-                      className={`status-select status-${ag.status ?? 'pendente'}`}
-                      value={ag.status ?? 'pendente'}
-                      onChange={e => onUpdateStatus(ag.id, e.target.value)}
-                    >
-                      <option value="pendente">Pendente</option>
-                      <option value="realizado">Realizado</option>
-                      <option value="cancelado">Cancelado</option>
-                    </select>
-                  </td>
-                  <td>
-                    {confirmId === ag.id ? (
-                      <div className="delete-confirm">
-                        <span className="delete-confirm-text">Excluir?</span>
-                        <button className="btn-confirm-yes" onClick={() => handleConfirm(ag.id)}>Sim</button>
-                        <button className="btn-confirm-no" onClick={handleCancel}>Não</button>
-                      </div>
-                    ) : (
-                      <button
-                        className="btn-delete"
-                        onClick={() => handleDeleteClick(ag.id)}
+              {visiveis.map(ag => {
+                const isHoje = ag.data === hoje
+                return (
+                  <tr
+                    key={ag.id}
+                    className={[
+                      ag.status === 'cancelado' ? 'row-cancelado' : '',
+                      isHoje ? 'row-hoje' : '',
+                    ].filter(Boolean).join(' ')}
+                  >
+                    <td>
+                      {ag.nome}
+                      {isHoje && <span className="badge-hoje">Hoje</span>}
+                    </td>
+                    <td>{formatDate(ag.data)}</td>
+                    <td>{ag.hora}</td>
+                    <td>
+                      {ag.valor_maquiagem != null
+                        ? <span className="icon-yes">{formatValor(ag.valor_maquiagem)}</span>
+                        : <span className="icon-no">—</span>
+                      }
+                    </td>
+                    <td>
+                      {ag.adiantamento
+                        ? ag.valor_adiantamento != null
+                          ? <span className="icon-yes">{formatValor(ag.valor_adiantamento)}</span>
+                          : <span className="icon-yes">✓</span>
+                        : <span className="icon-no">—</span>
+                      }
+                    </td>
+                    <td>
+                      {ag.penteado
+                        ? <span className="icon-yes">
+                            {ag.valor_penteado != null ? formatValor(ag.valor_penteado) : '✓'}
+                            {ag.nome_penteadista && (
+                              <span className="sub-info">{ag.nome_penteadista}</span>
+                            )}
+                            {ag.adiantamento_penteado && (
+                              <span className="sub-info">
+                                Adiant.: {ag.valor_adiantamento_penteado != null ? formatValor(ag.valor_adiantamento_penteado) : '✓'}
+                              </span>
+                            )}
+                          </span>
+                        : <span className="icon-no">—</span>
+                      }
+                    </td>
+                    <td>
+                      <select
+                        className={`status-select status-${ag.status ?? 'pendente'}`}
+                        value={ag.status ?? 'pendente'}
+                        onChange={e => onUpdateStatus(ag.id, e.target.value)}
                       >
-                        Excluir
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                        <option value="pendente">Pendente</option>
+                        <option value="realizado">Realizado</option>
+                        <option value="cancelado">Cancelado</option>
+                      </select>
+                    </td>
+                    <td className="obs-cell">
+                      {ag.observacoes
+                        ? <span className="obs-icon" title={ag.observacoes}>📝</span>
+                        : <span className="icon-no">—</span>
+                      }
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="btn-edit" onClick={() => onEdit(ag)}>
+                          Editar
+                        </button>
+                        {confirmId === ag.id ? (
+                          <div className="delete-confirm">
+                            <span className="delete-confirm-text">Excluir?</span>
+                            <button
+                              className="btn-confirm-yes"
+                              onClick={() => { setConfirmId(null); onDelete(ag.id) }}
+                            >
+                              Sim
+                            </button>
+                            <button
+                              className="btn-confirm-no"
+                              onClick={() => setConfirmId(null)}
+                            >
+                              Não
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="btn-delete"
+                            onClick={() => setConfirmId(ag.id)}
+                          >
+                            Excluir
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
+      )}
+
+      {!loading && !temFiltroAtivo && ordenados.length > 5 && (
+        <button
+          className="btn-ver-todos"
+          onClick={() => setMostrarTodos(v => !v)}
+        >
+          {mostrarTodos
+            ? 'Ver menos'
+            : `Ver todos (${ordenados.length})`}
+        </button>
       )}
     </div>
   )
