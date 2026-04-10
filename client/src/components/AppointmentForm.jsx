@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 const emptyForm = {
   nome: '',
+  tipo: 'social',
   data: '',
   hora: '',
   valor_maquiagem: '',
@@ -87,16 +88,28 @@ export default function AppointmentForm({ onSubmit }) {
     <div className="form-card">
       <h2>Novo Agendamento</h2>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="nome">Nome da cliente</label>
-          <input
-            id="nome"
-            name="nome"
-            type="text"
-            placeholder="Ex: Maria Silva"
-            value={form.nome}
-            onChange={handleChange}
-          />
+        <div className="form-row">
+          <div className="form-group" style={{ flex: 2 }}>
+            <label htmlFor="nome">Nome da cliente</label>
+            <input
+              id="nome"
+              name="nome"
+              type="text"
+              placeholder="Ex: Maria Silva"
+              value={form.nome}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="tipo">Tipo</label>
+            <select id="tipo" name="tipo" value={form.tipo} onChange={handleChange}>
+              <option value="">— Selecione —</option>
+              <option value="social">Maquiagem social</option>
+              <option value="noiva">Noiva</option>
+              <option value="infantil">Infantil</option>
+              <option value="curso">Curso de auto maquiagem</option>
+            </select>
+          </div>
         </div>
 
         <div className="form-row">

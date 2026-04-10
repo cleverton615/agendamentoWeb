@@ -34,13 +34,14 @@ function hasConflict(data, hora, excludeId = null) {
   );
 }
 
-function createAgendamento(nome, data, hora, valor_maquiagem, adiantamento, valor_adiantamento, penteado, valor_penteado, nome_penteadista, adiantamento_penteado, valor_adiantamento_penteado, observacoes) {
+function createAgendamento(nome, data, hora, valor_maquiagem, adiantamento, valor_adiantamento, penteado, valor_penteado, nome_penteadista, adiantamento_penteado, valor_adiantamento_penteado, observacoes, tipo) {
   const db = readDb();
   const novo = {
     id: db.nextId,
     nome,
     data,
     hora,
+    tipo: tipo || null,
     valor_maquiagem: valor_maquiagem ?? null,
     adiantamento: Boolean(adiantamento),
     valor_adiantamento: adiantamento && valor_adiantamento != null ? valor_adiantamento : null,
@@ -79,7 +80,7 @@ function updateAgendamento(id, fields) {
   if (!ag) return null;
 
   const {
-    nome, data, hora, valor_maquiagem,
+    nome, data, hora, tipo, valor_maquiagem,
     adiantamento, valor_adiantamento,
     penteado, valor_penteado, nome_penteadista,
     adiantamento_penteado, valor_adiantamento_penteado,
@@ -89,6 +90,7 @@ function updateAgendamento(id, fields) {
   ag.nome = nome;
   ag.data = data;
   ag.hora = hora;
+  ag.tipo = tipo || null;
   ag.valor_maquiagem = valor_maquiagem ?? null;
   ag.adiantamento = Boolean(adiantamento);
   ag.valor_adiantamento = adiantamento && valor_adiantamento != null ? valor_adiantamento : null;

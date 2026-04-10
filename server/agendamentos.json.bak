@@ -1,5 +1,5 @@
 {
-  "nextId": 108,
+  "nextId": 109,
   "agendamentos": [
     {
       "id": 62,
@@ -47,7 +47,8 @@
       "adiantamento_penteado": false,
       "valor_adiantamento_penteado": null,
       "observacoes": "Curso de auto maquiagem",
-      "status": "realizado"
+      "status": "realizado",
+      "tipo": "curso"
     },
     {
       "id": 65,
@@ -63,7 +64,8 @@
       "adiantamento_penteado": false,
       "valor_adiantamento_penteado": null,
       "observacoes": "Curso de auto maquiagem",
-      "status": "realizado"
+      "status": "realizado",
+      "tipo": "curso"
     },
     {
       "id": 66,
@@ -511,7 +513,8 @@
       "adiantamento_penteado": false,
       "valor_adiantamento_penteado": null,
       "observacoes": "Noiva e mais 2",
-      "status": "realizado"
+      "status": "realizado",
+      "tipo": "noiva"
     },
     {
       "id": 94,
@@ -664,7 +667,7 @@
       "hora": "11:00",
       "valor_maquiagem": 120,
       "adiantamento": true,
-      "valor_adiantamento": 39.99,
+      "valor_adiantamento": 40,
       "penteado": false,
       "valor_penteado": null,
       "nome_penteadista": null,
@@ -719,7 +722,7 @@
       "adiantamento_penteado": false,
       "valor_adiantamento_penteado": null,
       "observacoes": "foram 3",
-      "status": "pendente"
+      "status": "realizado"
     },
     {
       "id": 107,
@@ -735,6 +738,23 @@
       "adiantamento_penteado": false,
       "valor_adiantamento_penteado": null,
       "observacoes": "Elenise irá atender as 07:30",
+      "status": "realizado"
+    },
+    {
+      "id": 108,
+      "nome": "Maria Braga",
+      "data": "2026-04-11",
+      "hora": "08:00",
+      "tipo": "social",
+      "valor_maquiagem": 120,
+      "adiantamento": false,
+      "valor_adiantamento": null,
+      "penteado": false,
+      "valor_penteado": null,
+      "nome_penteadista": null,
+      "adiantamento_penteado": false,
+      "valor_adiantamento_penteado": null,
+      "observacoes": null,
       "status": "pendente"
     }
   ]

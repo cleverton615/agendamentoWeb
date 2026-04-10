@@ -1,0 +1,23 @@
+{
+  "nextId": 3,
+  "despesas": [
+    {
+      "id": 1,
+      "nome": "Cilios",
+      "valor": 351,
+      "forma_pagamento": "credito",
+      "parcelas": 3,
+      "local": "AliExpress",
+      "data": "2026-04"
+    },
+    {
+      "id": 2,
+      "nome": "Aluguel",
+      "valor": 500,
+      "forma_pagamento": "pix",
+      "parcelas": null,
+      "local": null,
+      "data": "2026-04"
+    }
+  ]
+}

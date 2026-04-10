@@ -30,13 +30,10 @@ function TooltipPersonalizado({ active, payload, label }) {
   )
 }
 
-function SecaoServico({ titulo, cor, total, count, dadosMensais, dataKey, mesFiltro }) {
-  const ticketMedio = count > 0 ? total / count : 0
-
+function SecaoServico({ titulo, cor, total, count }) {
   return (
     <section className="fin-section">
       <h2 className="fin-section-title" style={{ color: cor }}>{titulo}</h2>
-
       <div className="fin-section-cards">
         <div className="fin-card">
           <span className="fin-card-label">Total</span>
@@ -46,31 +43,7 @@ function SecaoServico({ titulo, cor, total, count, dadosMensais, dataKey, mesFil
           <span className="fin-card-label">Atendimentos</span>
           <span className="fin-card-value">{count}</span>
         </div>
-        <div className="fin-card">
-          <span className="fin-card-label">Ticket médio</span>
-          <span className="fin-card-value">{fmt(ticketMedio)}</span>
-        </div>
       </div>
-
-      {mesFiltro === '' && (
-        <div className="fin-chart-card">
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={dadosMensais} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0d0d5" vertical={false} />
-              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#a06070' }} axisLine={false} tickLine={false} />
-              <YAxis
-                tickFormatter={v => `R$${v}`}
-                tick={{ fontSize: 10, fill: '#a06070' }}
-                axisLine={false}
-                tickLine={false}
-                width={60}
-              />
-              <Tooltip content={<TooltipPersonalizado />} />
-              <Bar dataKey={dataKey} name={titulo} fill={cor} radius={[4, 4, 0, 0]} maxBarSize={40} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
     </section>
   )
 }
@@ -108,7 +81,13 @@ export default function FinanceiroPage() {
     })
   }, [agendamentos, anoFiltro, mesFiltro])
 
-  // Cancelados: somente os que têm algum adiantamento retido
+  // Somente realizados entram no fechamento de maquiagem e penteado
+  const realizados = useMemo(
+    () => filtrados.filter(a => a.status === 'realizado'),
+    [filtrados]
+  )
+
+  // Cancelados que têm adiantamento retido
   const canceladosComAdiantamento = useMemo(
     () => filtrados.filter(a =>
       a.status === 'cancelado' && (
@@ -119,35 +98,43 @@ export default function FinanceiroPage() {
     [filtrados]
   )
 
-  // Realizados e pendentes: excluem cancelados
-  const ativos = useMemo(
-    () => filtrados.filter(a => a.status !== 'cancelado'),
-    [filtrados]
-  )
-
-  const dadosMensais = useMemo(() => {
-    return MESES_LABEL.map((mes, idx) => {
-      const mesNum = idx + 1
-      const doMes = agendamentos.filter(a => {
-        const [ano, m] = a.data.split('-')
-        return parseInt(ano) === anoFiltro && parseInt(m) === mesNum && a.status !== 'cancelado'
-      })
-      return {
-        mes,
-        maquiagem: doMes.reduce((s, a) => s + (a.valor_maquiagem ?? 0), 0),
-        penteado: doMes.reduce((s, a) => s + (a.valor_penteado ?? 0), 0),
-      }
-    })
-  }, [agendamentos, anoFiltro])
-
-  const totalMaquiagem = ativos.reduce((s, a) => s + (a.valor_maquiagem ?? 0), 0)
-  const totalPenteado = ativos.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
-  const countMaquiagem = ativos.filter(a => a.valor_maquiagem != null).length
-  const countPenteado = ativos.filter(a => a.penteado).length
+  const totalMaquiagem = realizados.reduce((s, a) => s + (a.valor_maquiagem ?? 0), 0)
+  const totalPenteado = realizados.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
+  const countMaquiagem = realizados.filter(a => a.valor_maquiagem != null).length
+  const countPenteado = realizados.filter(a => a.penteado).length
 
   const totalAdiantamentosRetidos = canceladosComAdiantamento.reduce(
     (s, a) => s + (a.valor_adiantamento ?? 0) + (a.valor_adiantamento_penteado ?? 0), 0
   )
+
+  const totalGeral = totalMaquiagem + totalPenteado + totalAdiantamentosRetidos
+
+  // Dados mensais: realizados + adiantamentos retidos de cancelados
+  const dadosMensais = useMemo(() => {
+    return MESES_LABEL.map((mes, idx) => {
+      const mesNum = idx + 1
+      const realizadosDoMes = agendamentos.filter(a => {
+        const [ano, m] = a.data.split('-')
+        return parseInt(ano) === anoFiltro && parseInt(m) === mesNum && a.status === 'realizado'
+      })
+      const canceladosDoMes = agendamentos.filter(a => {
+        const [ano, m] = a.data.split('-')
+        return (
+          parseInt(ano) === anoFiltro && parseInt(m) === mesNum &&
+          a.status === 'cancelado' && (
+            (a.adiantamento && a.valor_adiantamento != null) ||
+            (a.adiantamento_penteado && a.valor_adiantamento_penteado != null)
+          )
+        )
+      })
+      const maquiagem = realizadosDoMes.reduce((s, a) => s + (a.valor_maquiagem ?? 0), 0)
+      const penteado = realizadosDoMes.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
+      const retidos = canceladosDoMes.reduce(
+        (s, a) => s + (a.valor_adiantamento ?? 0) + (a.valor_adiantamento_penteado ?? 0), 0
+      )
+      return { mes, maquiagem, penteado, retidos, total: maquiagem + penteado + retidos }
+    })
+  }, [agendamentos, anoFiltro])
 
   return (
     <div className="page-content">
@@ -183,19 +170,46 @@ export default function FinanceiroPage() {
               cor="#c97b84"
               total={totalMaquiagem}
               count={countMaquiagem}
-              dadosMensais={dadosMensais}
-              dataKey="maquiagem"
-              mesFiltro={mesFiltro}
             />
             <SecaoServico
               titulo="Penteado"
               cor="#7a4d8a"
               total={totalPenteado}
               count={countPenteado}
-              dadosMensais={dadosMensais}
-              dataKey="penteado"
-              mesFiltro={mesFiltro}
             />
+          </div>
+
+          {/* Total Geral */}
+          <div className="fin-total-geral">
+            <div className="fin-total-geral-header">
+              <h2 className="fin-section-title">Total Geral</h2>
+              <span className="fin-total-geral-value">{fmt(totalGeral)}</span>
+            </div>
+            <p className="fin-total-geral-desc">
+              Maquiagem ({fmt(totalMaquiagem)}) + Penteado ({fmt(totalPenteado)}) + Adiantamentos retidos ({fmt(totalAdiantamentosRetidos)})
+            </p>
+
+            {mesFiltro === '' && (
+              <div className="fin-chart-card" style={{ marginTop: 16 }}>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={dadosMensais} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0d0d5" vertical={false} />
+                    <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#a06070' }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      tickFormatter={v => `R$${v}`}
+                      tick={{ fontSize: 10, fill: '#a06070' }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={60}
+                    />
+                    <Tooltip content={<TooltipPersonalizado />} />
+                    <Bar dataKey="maquiagem" name="Maquiagem" fill="#c97b84" radius={[4, 4, 0, 0]} maxBarSize={30} stackId="a" />
+                    <Bar dataKey="penteado" name="Penteado" fill="#7a4d8a" radius={[0, 0, 0, 0]} maxBarSize={30} stackId="a" />
+                    <Bar dataKey="retidos" name="Adiant. retidos" fill="#e8a020" radius={[4, 4, 0, 0]} maxBarSize={30} stackId="a" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           {canceladosComAdiantamento.length > 0 && (

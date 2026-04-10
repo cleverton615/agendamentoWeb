@@ -137,7 +137,8 @@ h1 {
 
 .form-group input[type="text"],
 .form-group input[type="date"],
-.form-group input[type="time"] {
+.form-group input[type="time"],
+.form-group select {
   padding: 9px 12px;
   border: 1px solid #e8b8bf;
   border-radius: 8px;
@@ -480,6 +481,35 @@ tbody td {
   margin-bottom: 4px;
 }
 
+.fin-total-geral {
+  background: #fff;
+  border: 1px solid #f0d0d5;
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-top: 24px;
+  box-shadow: 0 2px 8px rgba(201, 123, 132, 0.08);
+}
+
+.fin-total-geral-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fin-total-geral-value {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #3a2a2d;
+}
+
+.fin-total-geral-desc {
+  font-size: 0.8rem;
+  color: #a06070;
+  margin-top: 6px;
+}
+
 .fin-cancelamentos {
   margin-top: 32px;
 }
@@ -590,25 +620,6 @@ tbody td {
   color: #c97b84;
 }
 
-.btn-ver-todos {
-  display: block;
-  width: 100%;
-  margin-top: 10px;
-  padding: 9px;
-  background: none;
-  border: 1px dashed #e8b8bf;
-  border-radius: 8px;
-  color: #a06070;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.btn-ver-todos:hover {
-  background-color: #fff0f2;
-  color: #c97b84;
-}
 
 .btn-csv {
   background: none;
@@ -914,5 +925,161 @@ tbody td {
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Despesas ── */
+.desp-form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.desp-filtro-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.desp-total-mes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.desp-total-mes-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a06070;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.desp-total-mes-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3a2a2d;
+}
+
+.sucesso-msg {
+  background: #d1f5e0;
+  border: 1px solid #a8e6c0;
+  border-radius: 8px;
+  color: #1a6636;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.row-editando td {
+  background-color: #fff8e1 !important;
+}
+
+.badge-pagamento {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.badge-pagamento-pix      { background-color: #e0f7fa; color: #006064; }
+.badge-pagamento-dinheiro { background-color: #e8f5e9; color: #2e7d32; }
+.badge-pagamento-debito   { background-color: #ede7f6; color: #4527a0; }
+.badge-pagamento-credito  { background-color: #fff3e0; color: #e65100; }
+
+/* ── Badges de tipo ── */
+.badge-tipo {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.badge-tipo-noiva {
+  background-color: #fce4ec;
+  color: #880e4f;
+}
+
+.badge-tipo-infantil {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.badge-tipo-curso {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* ── Paginação ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-page {
+  background: none;
+  border: 1px solid #e8b8bf;
+  border-radius: 8px;
+  color: #7a4d55;
+  padding: 7px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-page:hover:not(:disabled) {
+  background-color: #f5e0e3;
+  color: #3a2a2d;
+  border-color: #c97b84;
+}
+
+.btn-page:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pagination-info {
+  font-size: 0.88rem;
+  color: #7a4d55;
+  font-weight: 600;
+}
+
+.pagination-total {
+  font-weight: 400;
+  color: #a06070;
+}
+
+/* ── Link "Ver todos" (modo preview) ── */
+.link-ver-todos {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #c97b84;
+  text-decoration: none;
+  padding: 9px;
+  border: 1px dashed #e8b8bf;
+  border-radius: 8px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.link-ver-todos:hover {
+  background-color: #fff0f2;
+  color: #9b2a35;
 }
 

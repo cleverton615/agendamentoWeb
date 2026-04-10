@@ -13,6 +13,14 @@ export default function Sidebar() {
           <span className="sidebar-link-icon">📅</span>
           Agendamentos
         </NavLink>
+        <NavLink to="/todos" className={({ isActive }) => 'sidebar-link' + (isActive ? ' active' : '')}>
+          <span className="sidebar-link-icon">📋</span>
+          Todos os Agendamentos
+        </NavLink>
+        <NavLink to="/despesas" className={({ isActive }) => 'sidebar-link' + (isActive ? ' active' : '')}>
+          <span className="sidebar-link-icon">🧾</span>
+          Despesas
+        </NavLink>
         <NavLink to="/financeiro" className={({ isActive }) => 'sidebar-link' + (isActive ? ' active' : '')}>
           <span className="sidebar-link-icon">💰</span>
           Financeiro

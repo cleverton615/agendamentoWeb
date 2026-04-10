@@ -3,6 +3,7 @@ import { useState } from 'react'
 export default function EditModal({ agendamento, onSave, onClose }) {
   const [form, setForm] = useState({
     nome: agendamento.nome,
+    tipo: agendamento.tipo ?? '',
     data: agendamento.data,
     hora: agendamento.hora,
     valor_maquiagem: agendamento.valor_maquiagem ?? '',
@@ -54,6 +55,7 @@ export default function EditModal({ agendamento, onSave, onClose }) {
     if (!form.hora) { alert('Por favor, informe o horário.'); return }
     onSave(agendamento.id, {
       ...form,
+      tipo: form.tipo || null,
       valor_maquiagem: form.valor_maquiagem !== '' ? parseFloat(form.valor_maquiagem) : null,
       valor_adiantamento: form.adiantamento && form.valor_adiantamento !== ''
         ? parseFloat(form.valor_adiantamento) : null,
@@ -80,16 +82,28 @@ export default function EditModal({ agendamento, onSave, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="edit-nome">Nome da cliente</label>
-            <input
-              id="edit-nome"
-              name="nome"
-              type="text"
-              placeholder="Ex: Maria Silva"
-              value={form.nome}
-              onChange={handleChange}
-            />
+          <div className="form-row">
+            <div className="form-group" style={{ flex: 2 }}>
+              <label htmlFor="edit-nome">Nome da cliente</label>
+              <input
+                id="edit-nome"
+                name="nome"
+                type="text"
+                placeholder="Ex: Maria Silva"
+                value={form.nome}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="edit-tipo">Tipo</label>
+              <select id="edit-tipo" name="tipo" value={form.tipo} onChange={handleChange}>
+                <option value="">— Selecione —</option>
+                <option value="social">Maquiagem social</option>
+                <option value="noiva">Noiva</option>
+                <option value="infantil">Infantil</option>
+                <option value="curso">Curso de auto maquiagem</option>
+              </select>
+            </div>
           </div>
 
           <div className="form-row">
