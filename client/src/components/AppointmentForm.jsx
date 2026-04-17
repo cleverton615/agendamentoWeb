@@ -1,8 +1,9 @@
 import { useState } from 'react'
 
+
 const emptyForm = {
   nome: '',
-  tipo: 'social',
+  tipo: '',
   data: '',
   hora: '',
   valor_maquiagem: '',
@@ -104,10 +105,13 @@ export default function AppointmentForm({ onSubmit }) {
             <label htmlFor="tipo">Tipo</label>
             <select id="tipo" name="tipo" value={form.tipo} onChange={handleChange}>
               <option value="">— Selecione —</option>
-              <option value="social">Maquiagem social</option>
-              <option value="noiva">Noiva</option>
-              <option value="infantil">Infantil</option>
-              <option value="curso">Curso de auto maquiagem</option>
+              <option value="maquiagem">Maquiagem</option>
+              <option value="penteado">Penteado</option>
+              <option value="unhas">Unhas</option>
+              <option value="epilacao">Epilação</option>
+              <option value="sobrancelhas">Sobrancelhas</option>
+              <option value="cabeleireira">Cabeleireira</option>
+              <option value="barbeiro">Barbeiro</option>
             </select>
           </div>
         </div>
@@ -136,7 +140,7 @@ export default function AppointmentForm({ onSubmit }) {
         </div>
 
         <div className="form-group">
-          <label htmlFor="valor_maquiagem">Valor da maquiagem</label>
+          <label htmlFor="valor_maquiagem">Valor</label>
           <div className="input-currency-wrap">
             <span className="currency-prefix">R$</span>
             <input
@@ -190,10 +194,18 @@ export default function AppointmentForm({ onSubmit }) {
                 checked={form.penteado}
                 onChange={handleChange}
               />
-              Penteado solicitado
+              Serviço agregado
             </label>
             {form.penteado && (
               <div className="penteado-extras">
+                <input
+                  name="nome_penteadista"
+                  type="text"
+                  placeholder="Nome do serviço (ex: Penteado noiva, Manicure...)"
+                  value={form.nome_penteadista}
+                  onChange={handleChange}
+                  className="input-penteadista"
+                />
                 <div className="valor-adiantamento">
                   <span className="currency-prefix">R$</span>
                   <input
@@ -207,14 +219,6 @@ export default function AppointmentForm({ onSubmit }) {
                     className="input-valor"
                   />
                 </div>
-                <input
-                  name="nome_penteadista"
-                  type="text"
-                  placeholder="Nome da penteadista"
-                  value={form.nome_penteadista}
-                  onChange={handleChange}
-                  className="input-penteadista"
-                />
                 <div className="checkbox-with-value">
                   <label className="checkbox-group">
                     <input

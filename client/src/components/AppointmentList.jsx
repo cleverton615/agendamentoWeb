@@ -16,10 +16,13 @@ function SortIcon({ sortKey, col, sortDir }) {
 }
 
 const TIPO_LABEL = {
-  social: 'Maquiagem social',
-  noiva: 'Noiva',
-  infantil: 'Infantil',
-  curso: 'Curso de auto maquiagem',
+  maquiagem: 'Maquiagem',
+  penteado: 'Penteado',
+  unhas: 'Unhas',
+  epilacao: 'Epilação',
+  sobrancelhas: 'Sobrancelhas',
+  cabeleireira: 'Cabeleireira',
+  barbeiro: 'Barbeiro',
 }
 
 const POR_PAGINA = 20
@@ -104,7 +107,7 @@ export default function AppointmentList({ agendamentos, onDelete, onUpdateStatus
   const visiveis = mode === 'paginated' ? paginados : preview
 
   function exportCSV() {
-    const header = ['Nome', 'Tipo', 'Data', 'Horário', 'Valor Maquiagem', 'Adiantamento', 'Penteado', 'Valor Penteado', 'Penteadista', 'Adiant. Penteado', 'Status', 'Observações']
+    const header = ['Nome', 'Tipo', 'Data', 'Horário', 'Valor Serviço', 'Adiantamento', 'Serviço agregado', 'Valor serviço agr.', 'Nome serviço', 'Adiant. serviço agr.', 'Status', 'Observações']
     const rows = ordenados.map(ag => [
       ag.nome,
       ag.tipo ? TIPO_LABEL[ag.tipo] : '',
@@ -157,10 +160,13 @@ export default function AppointmentList({ agendamentos, onDelete, onUpdateStatus
             <label htmlFor="fil-tipo">Tipo</label>
             <select id="fil-tipo" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}>
               <option value="">Todos</option>
-              <option value="social">Maquiagem social</option>
-              <option value="noiva">Noiva</option>
-              <option value="infantil">Infantil</option>
-              <option value="curso">Curso</option>
+              <option value="maquiagem">Maquiagem</option>
+              <option value="penteado">Penteado</option>
+              <option value="unhas">Unhas</option>
+              <option value="epilacao">Epilação</option>
+              <option value="sobrancelhas">Sobrancelhas</option>
+              <option value="cabeleireira">Cabeleireira</option>
+              <option value="barbeiro">Barbeiro</option>
             </select>
           </div>
           <div className="list-filter-group">
@@ -213,9 +219,9 @@ export default function AppointmentList({ agendamentos, onDelete, onUpdateStatus
                   Data <SortIcon sortKey={sortKey} col="data" sortDir={sortDir} />
                 </th>
                 <th>Horário</th>
-                <th>Maquiagem</th>
+                <th>Serviço (R$)</th>
                 <th>Adiantamento</th>
-                <th>Penteado</th>
+                <th>Serviço agregado</th>
                 <th className="th-sortable" onClick={() => toggleSort('status')}>
                   Status <SortIcon sortKey={sortKey} col="status" sortDir={sortDir} />
                 </th>

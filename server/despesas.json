@@ -1,31 +1,52 @@
 {
-  "nextId": 4,
+  "nextId": 8,
   "despesas": [
     {
-      "id": 1,
+      "id": 4,
+      "grupo_id": 4,
       "nome": "Cilios",
-      "valor": 351,
+      "valor": 100,
+      "valor_total": 300,
       "forma_pagamento": "credito",
       "parcelas": 3,
+      "parcela_num": 1,
       "local": "AliExpress",
       "data": "2026-04"
     },
     {
-      "id": 2,
-      "nome": "Aluguel",
-      "valor": 500,
-      "forma_pagamento": "pix",
-      "parcelas": null,
-      "local": null,
-      "data": "2026-04"
+      "id": 5,
+      "grupo_id": 4,
+      "nome": "Cilios",
+      "valor": 100,
+      "valor_total": 300,
+      "forma_pagamento": "credito",
+      "parcelas": 3,
+      "parcela_num": 2,
+      "local": "AliExpress",
+      "data": "2026-05"
     },
     {
-      "id": 3,
-      "nome": "Energia",
-      "valor": 80,
+      "id": 6,
+      "grupo_id": 4,
+      "nome": "Cilios",
+      "valor": 100,
+      "valor_total": 300,
+      "forma_pagamento": "credito",
+      "parcelas": 3,
+      "parcela_num": 3,
+      "local": "AliExpress",
+      "data": "2026-06"
+    },
+    {
+      "id": 7,
+      "grupo_id": null,
+      "nome": "Aluguel",
+      "valor": 500,
+      "valor_total": null,
       "forma_pagamento": "pix",
       "parcelas": null,
-      "local": "Neoenergia",
+      "parcela_num": null,
+      "local": null,
       "data": "2026-04"
     }
   ]

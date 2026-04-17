@@ -32,13 +32,22 @@ const emptyForm = {
   data: mesAtual(),
 }
 
+// Subtract (parcela_num - 1) months from a YYYY-MM string to get the starting month
+function getStartingMonth(d) {
+  if (!d.parcela_num || d.parcela_num === 1) return d.data
+  const [year, month] = d.data.split('-').map(Number)
+  const start = new Date(year, month - 1 - (d.parcela_num - 1), 1)
+  return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`
+}
+
 export default function DespesasPage() {
   const [despesas, setDespesas] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [form, setForm] = useState(emptyForm)
-  const [editando, setEditando] = useState(null)   // despesa sendo editada
-  const [confirmId, setConfirmId] = useState(null)
+  const [editando, setEditando] = useState(null)        // id for single records
+  const [editandoGrupo, setEditandoGrupo] = useState(null) // grupo_id for installment groups
+  const [confirmDelete, setConfirmDelete] = useState(null) // { type: 'single'|'grupo', id }
   const [filtroMes, setFiltroMes] = useState(mesAtual())
   const [sucesso, setSucesso] = useState('')
 
@@ -74,19 +83,35 @@ export default function DespesasPage() {
   function resetForm() {
     setForm(emptyForm)
     setEditando(null)
+    setEditandoGrupo(null)
     setError(null)
   }
 
   function iniciarEdicao(d) {
-    setEditando(d.id)
-    setForm({
-      nome: d.nome,
-      valor: String(d.valor),
-      forma_pagamento: d.forma_pagamento,
-      parcelas: d.parcelas != null ? String(d.parcelas) : '1',
-      local: d.local ?? '',
-      data: d.data,
-    })
+    const isGrupo = d.grupo_id != null
+    if (isGrupo) {
+      setEditandoGrupo(d.grupo_id)
+      setEditando(null)
+      setForm({
+        nome: d.nome,
+        valor: String(d.valor_total ?? d.valor * (d.parcelas ?? 1)),
+        forma_pagamento: d.forma_pagamento,
+        parcelas: String(d.parcelas ?? 1),
+        local: d.local ?? '',
+        data: getStartingMonth(d),
+      })
+    } else {
+      setEditando(d.id)
+      setEditandoGrupo(null)
+      setForm({
+        nome: d.nome,
+        valor: String(d.valor),
+        forma_pagamento: d.forma_pagamento,
+        parcelas: d.parcelas != null ? String(d.parcelas) : '1',
+        local: d.local ?? '',
+        data: d.data,
+      })
+    }
     setError(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -107,8 +132,18 @@ export default function DespesasPage() {
     }
 
     try {
-      const url = editando ? `${API_BASE}/despesas/${editando}` : `${API_BASE}/despesas`
-      const method = editando ? 'PUT' : 'POST'
+      let url, method
+      if (editandoGrupo) {
+        url = `${API_BASE}/despesas/grupo/${editandoGrupo}`
+        method = 'PUT'
+      } else if (editando) {
+        url = `${API_BASE}/despesas/${editando}`
+        method = 'PUT'
+      } else {
+        url = `${API_BASE}/despesas`
+        method = 'POST'
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -119,23 +154,27 @@ export default function DespesasPage() {
         throw new Error(data.error || 'Erro ao salvar despesa.')
       }
       await fetchDespesas()
-      showSucesso(editando ? 'Despesa atualizada!' : 'Despesa adicionada!')
+      showSucesso(editando || editandoGrupo ? 'Despesa atualizada!' : 'Despesa adicionada!')
       resetForm()
     } catch (err) {
       setError(err.message)
     }
   }
 
-  async function handleDelete(id) {
+  async function executarDelete() {
+    if (!confirmDelete) return
     try {
-      const res = await fetch(`${API_BASE}/despesas/${id}`, { method: 'DELETE' })
+      const url = confirmDelete.type === 'grupo'
+        ? `${API_BASE}/despesas/grupo/${confirmDelete.id}`
+        : `${API_BASE}/despesas/${confirmDelete.id}`
+      const res = await fetch(url, { method: 'DELETE' })
       if (!res.ok) throw new Error('Erro ao excluir.')
       await fetchDespesas()
       showSucesso('Despesa excluída.')
     } catch (err) {
       setError(err.message)
     } finally {
-      setConfirmId(null)
+      setConfirmDelete(null)
     }
   }
 
@@ -158,6 +197,8 @@ export default function DespesasPage() {
     return `${MESES_LABEL[parseInt(m) - 1]} ${y}`
   }
 
+  const isEditando = editando !== null || editandoGrupo !== null
+
   return (
     <div className="page-content">
       <h1>Despesas</h1>
@@ -165,7 +206,7 @@ export default function DespesasPage() {
 
       {/* Formulário */}
       <div className="form-card">
-        <h2>{editando ? 'Editar Despesa' : 'Nova Despesa'}</h2>
+        <h2>{isEditando ? 'Editar Despesa' : 'Nova Despesa'}</h2>
         <form onSubmit={handleSubmit}>
 
           <div className="form-row">
@@ -181,7 +222,9 @@ export default function DespesasPage() {
               />
             </div>
             <div className="form-group">
-              <label htmlFor="desp-mes">Mês de referência</label>
+              <label htmlFor="desp-mes">
+                {editandoGrupo ? 'Mês da 1ª parcela' : 'Mês de referência'}
+              </label>
               <input
                 id="desp-mes"
                 name="data"
@@ -194,7 +237,11 @@ export default function DespesasPage() {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="desp-valor">Valor</label>
+              <label htmlFor="desp-valor">
+                {form.forma_pagamento === 'credito' && parseInt(form.parcelas) > 1
+                  ? 'Valor total'
+                  : 'Valor'}
+              </label>
               <div className="input-currency-wrap">
                 <span className="currency-prefix">R$</span>
                 <input
@@ -232,6 +279,17 @@ export default function DespesasPage() {
               </div>
             )}
 
+            {form.forma_pagamento === 'credito' && parseInt(form.parcelas) > 1 && (
+              <div className="desp-parcela-preview">
+                <span className="desp-parcela-preview-label">Valor por parcela</span>
+                <span className="desp-parcela-preview-valor">
+                  {form.valor && !isNaN(parseFloat(form.valor))
+                    ? fmt(parseFloat(form.valor) / parseInt(form.parcelas))
+                    : '—'}
+                </span>
+              </div>
+            )}
+
             <div className="form-group" style={{ flex: 2 }}>
               <label htmlFor="desp-local">Onde foi comprado</label>
               <input
@@ -249,9 +307,9 @@ export default function DespesasPage() {
 
           <div className="desp-form-actions">
             <button type="submit" className="btn-submit">
-              {editando ? 'Salvar alterações' : 'Adicionar despesa'}
+              {isEditando ? 'Salvar alterações' : 'Adicionar despesa'}
             </button>
-            {editando && (
+            {isEditando && (
               <button type="button" className="btn-cancel-modal" onClick={resetForm}>
                 Cancelar
               </button>
@@ -305,34 +363,64 @@ export default function DespesasPage() {
               </tr>
             </thead>
             <tbody>
-              {despesasFiltradas.map(d => (
-                <tr key={d.id} className={editando === d.id ? 'row-editando' : ''}>
-                  <td>{d.nome}</td>
-                  <td><strong>{fmt(d.valor)}</strong></td>
-                  <td>
-                    <span className={`badge-pagamento badge-pagamento-${d.forma_pagamento}`}>
-                      {FORMA_LABEL[d.forma_pagamento]}
-                      {d.forma_pagamento === 'credito' && d.parcelas > 1 && ` ${d.parcelas}x`}
-                    </span>
-                  </td>
-                  <td>{d.local ?? <span className="icon-no">—</span>}</td>
-                  <td>{labelMes(d.data)}</td>
-                  <td>
-                    <div className="row-actions">
-                      <button className="btn-edit" onClick={() => iniciarEdicao(d)}>Editar</button>
-                      {confirmId === d.id ? (
-                        <div className="delete-confirm">
-                          <span className="delete-confirm-text">Excluir?</span>
-                          <button className="btn-confirm-yes" onClick={() => handleDelete(d.id)}>Sim</button>
-                          <button className="btn-confirm-no" onClick={() => setConfirmId(null)}>Não</button>
-                        </div>
-                      ) : (
-                        <button className="btn-delete" onClick={() => setConfirmId(d.id)}>Excluir</button>
+              {despesasFiltradas.map(d => {
+                const isGrupo = d.grupo_id != null
+                const confirmKey = isGrupo ? `g-${d.grupo_id}` : `s-${d.id}`
+                const isConfirming = confirmDelete && (
+                  (confirmDelete.type === 'grupo' && confirmDelete.id === d.grupo_id) ||
+                  (confirmDelete.type === 'single' && confirmDelete.id === d.id)
+                )
+                const isEditRow = (editando === d.id) || (editandoGrupo === d.grupo_id && d.grupo_id != null)
+                return (
+                  <tr key={d.id} className={isEditRow ? 'row-editando' : ''}>
+                    <td>{d.nome}</td>
+                    <td>
+                      <strong>{fmt(d.valor)}</strong>
+                      {isGrupo && d.valor_total != null && (
+                        <span className="desp-total-hint"> de {fmt(d.valor_total)}</span>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td>
+                      <span className={`badge-pagamento badge-pagamento-${d.forma_pagamento}`}>
+                        {FORMA_LABEL[d.forma_pagamento]}
+                        {d.forma_pagamento === 'credito' && d.parcelas > 1 && d.parcela_num != null
+                          ? ` ${d.parcela_num}/${d.parcelas}`
+                          : d.forma_pagamento === 'credito' && d.parcelas > 1
+                            ? ` ${d.parcelas}x`
+                            : null
+                        }
+                      </span>
+                    </td>
+                    <td>{d.local ?? <span className="icon-no">—</span>}</td>
+                    <td>{labelMes(d.data)}</td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="btn-edit" onClick={() => iniciarEdicao(d)}>Editar</button>
+                        {isConfirming ? (
+                          <div className="delete-confirm">
+                            <span className="delete-confirm-text">
+                              {isGrupo ? `Excluir todas as ${d.parcelas} parcelas?` : 'Excluir?'}
+                            </span>
+                            <button className="btn-confirm-yes" onClick={executarDelete}>Sim</button>
+                            <button className="btn-confirm-no" onClick={() => setConfirmDelete(null)}>Não</button>
+                          </div>
+                        ) : (
+                          <button
+                            className="btn-delete"
+                            onClick={() => setConfirmDelete(
+                              isGrupo
+                                ? { type: 'grupo', id: d.grupo_id }
+                                : { type: 'single', id: d.id }
+                            )}
+                          >
+                            Excluir
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

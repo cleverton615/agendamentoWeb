@@ -7,6 +7,16 @@ import {
 const API_BASE = 'http://localhost:3001/api'
 const MESES_LABEL = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
+const SERVICOS = [
+  { key: 'maquiagem',   label: 'Maquiagem',    cor: '#c97b84' },
+  { key: 'penteado',    label: 'Penteado',      cor: '#7a4d8a' },
+  { key: 'unhas',       label: 'Unhas',         cor: '#e05c8a' },
+  { key: 'epilacao',    label: 'Epilação',      cor: '#d4846a' },
+  { key: 'sobrancelhas',label: 'Sobrancelhas',  cor: '#9c6b30' },
+  { key: 'cabeleireira',label: 'Cabeleireira',  cor: '#4a7c59' },
+  { key: 'barbeiro',    label: 'Barbeiro',      cor: '#3a6080' },
+]
+
 function fmt(valor) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
@@ -98,18 +108,30 @@ export default function FinanceiroPage() {
     [filtrados]
   )
 
-  const totalMaquiagem = realizados.reduce((s, a) => s + (a.valor_maquiagem ?? 0), 0)
-  const totalPenteado = realizados.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
-  const countMaquiagem = realizados.filter(a => a.valor_maquiagem != null).length
-  const countPenteado = realizados.filter(a => a.penteado).length
+  // Totais por tipo de serviço (campo valor_maquiagem é o valor principal do serviço)
+  const totaisPorTipo = useMemo(() => {
+    return SERVICOS.map(s => ({
+      ...s,
+      total: realizados.filter(a => a.tipo === s.key).reduce((acc, a) => acc + (a.valor_maquiagem ?? 0), 0),
+      count: realizados.filter(a => a.tipo === s.key).length,
+    })).filter(s => s.count > 0 || realizados.some(a => a.tipo === s.key))
+  }, [realizados])
+
+  // Serviços com pelo menos 1 atendimento realizado no período
+  const totaisPorTipoAtivos = totaisPorTipo.filter(s => s.count > 0)
+
+  // Penteado como add-on (separado do serviço principal)
+  const totalPenteadoAddon = realizados.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
+  const countPenteadoAddon = realizados.filter(a => a.penteado && a.valor_penteado != null).length
 
   const totalAdiantamentosRetidos = canceladosComAdiantamento.reduce(
     (s, a) => s + (a.valor_adiantamento ?? 0) + (a.valor_adiantamento_penteado ?? 0), 0
   )
 
-  const totalGeral = totalMaquiagem + totalPenteado + totalAdiantamentosRetidos
+  const totalServicos = totaisPorTipoAtivos.reduce((s, t) => s + t.total, 0)
+  const totalGeral = totalServicos + totalPenteadoAddon + totalAdiantamentosRetidos
 
-  // Dados mensais: realizados + adiantamentos retidos de cancelados
+  // Dados mensais para gráfico
   const dadosMensais = useMemo(() => {
     return MESES_LABEL.map((mes, idx) => {
       const mesNum = idx + 1
@@ -127,12 +149,12 @@ export default function FinanceiroPage() {
           )
         )
       })
-      const maquiagem = realizadosDoMes.reduce((s, a) => s + (a.valor_maquiagem ?? 0), 0)
-      const penteado = realizadosDoMes.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
+      const servicos = realizadosDoMes.reduce((s, a) => s + (a.valor_maquiagem ?? 0), 0)
+      const penteadoAddon = realizadosDoMes.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
       const retidos = canceladosDoMes.reduce(
         (s, a) => s + (a.valor_adiantamento ?? 0) + (a.valor_adiantamento_penteado ?? 0), 0
       )
-      return { mes, maquiagem, penteado, retidos, total: maquiagem + penteado + retidos }
+      return { mes, servicos, penteadoAddon, retidos, total: servicos + penteadoAddon + retidos }
     })
   }, [agendamentos, anoFiltro])
 
@@ -164,20 +186,29 @@ export default function FinanceiroPage() {
 
       {!loading && (
         <>
-          <div className="fin-sections">
-            <SecaoServico
-              titulo="Maquiagem"
-              cor="#c97b84"
-              total={totalMaquiagem}
-              count={countMaquiagem}
-            />
-            <SecaoServico
-              titulo="Penteado"
-              cor="#7a4d8a"
-              total={totalPenteado}
-              count={countPenteado}
-            />
-          </div>
+          {totaisPorTipoAtivos.length > 0 ? (
+            <div className="fin-sections">
+              {totaisPorTipoAtivos.map(s => (
+                <SecaoServico
+                  key={s.key}
+                  titulo={s.label}
+                  cor={s.cor}
+                  total={s.total}
+                  count={s.count}
+                />
+              ))}
+              {countPenteadoAddon > 0 && (
+                <SecaoServico
+                  titulo="Serviço agregado"
+                  cor="#7a4d8a"
+                  total={totalPenteadoAddon}
+                  count={countPenteadoAddon}
+                />
+              )}
+            </div>
+          ) : (
+            <p className="fin-empty-msg">Nenhum atendimento realizado no período.</p>
+          )}
 
           {/* Total Geral */}
           <div className="fin-total-geral">
@@ -186,7 +217,9 @@ export default function FinanceiroPage() {
               <span className="fin-total-geral-value">{fmt(totalGeral)}</span>
             </div>
             <p className="fin-total-geral-desc">
-              Maquiagem ({fmt(totalMaquiagem)}) + Penteado ({fmt(totalPenteado)}) + Adiantamentos retidos ({fmt(totalAdiantamentosRetidos)})
+              Serviços ({fmt(totalServicos)})
+              {totalPenteadoAddon > 0 && ` + Serviço agregado (${fmt(totalPenteadoAddon)})`}
+              {totalAdiantamentosRetidos > 0 && ` + Adiantamentos retidos (${fmt(totalAdiantamentosRetidos)})`}
             </p>
 
             {mesFiltro === '' && (
@@ -203,8 +236,8 @@ export default function FinanceiroPage() {
                       width={60}
                     />
                     <Tooltip content={<TooltipPersonalizado />} />
-                    <Bar dataKey="maquiagem" name="Maquiagem" fill="#c97b84" radius={[4, 4, 0, 0]} maxBarSize={30} stackId="a" />
-                    <Bar dataKey="penteado" name="Penteado" fill="#7a4d8a" radius={[0, 0, 0, 0]} maxBarSize={30} stackId="a" />
+                    <Bar dataKey="servicos" name="Serviços" fill="#c97b84" radius={[4, 4, 0, 0]} maxBarSize={30} stackId="a" />
+                    <Bar dataKey="penteadoAddon" name="Serviço agregado" fill="#7a4d8a" radius={[0, 0, 0, 0]} maxBarSize={30} stackId="a" />
                     <Bar dataKey="retidos" name="Adiant. retidos" fill="#e8a020" radius={[4, 4, 0, 0]} maxBarSize={30} stackId="a" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -230,7 +263,7 @@ export default function FinanceiroPage() {
                     <tr>
                       <th>Nome</th>
                       <th>Data</th>
-                      <th>Adiant. maquiagem</th>
+                      <th>Adiant. serviço</th>
                       <th>Adiant. penteado</th>
                       <th>Total retido</th>
                     </tr>

@@ -102,7 +102,7 @@ export default function AgendamentosPage() {
   return (
     <div className="page-content">
       <h1>Agendamentos</h1>
-      <p className="subtitle">Gerenciamento de clientes de maquiagem</p>
+      <p className="subtitle">Gerenciamento de clientes</p>
 
       <AppointmentForm onSubmit={handleCreate} />
 

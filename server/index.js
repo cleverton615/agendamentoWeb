@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { getAllAgendamentos, createAgendamento, deleteAgendamento, updateStatus, updateAgendamento, hasConflict } = require('./database');
-const { getAllDespesas, createDespesa, updateDespesa, deleteDespesa } = require('./despesasDb');
+const { getAllDespesas, createDespesa, updateDespesa, deleteDespesa, deleteDespesasByGrupo, updateDespesaGrupo } = require('./despesasDb');
 
 const app = express();
 
@@ -31,7 +31,7 @@ app.post('/api/agendamentos', (req, res) => {
   if (!hora || !/^\d{2}:\d{2}$/.test(hora)) {
     return res.status(400).json({ error: 'Hora inválida. Use o formato HH:MM.' });
   }
-  if (tipo && !['social', 'noiva', 'infantil', 'curso'].includes(tipo)) {
+  if (tipo && !['maquiagem', 'penteado', 'unhas', 'epilacao', 'sobrancelhas', 'cabeleireira', 'barbeiro'].includes(tipo)) {
     return res.status(400).json({ error: 'Tipo inválido.' });
   }
   if (hasConflict(data, hora)) {
@@ -76,7 +76,7 @@ app.put('/api/agendamentos/:id', (req, res) => {
   if (!hora || !/^\d{2}:\d{2}$/.test(hora)) {
     return res.status(400).json({ error: 'Hora inválida.' });
   }
-  if (tipo && !['noiva', 'infantil', 'curso'].includes(tipo)) {
+  if (tipo && !['maquiagem', 'penteado', 'unhas', 'epilacao', 'sobrancelhas', 'cabeleireira', 'barbeiro'].includes(tipo)) {
     return res.status(400).json({ error: 'Tipo inválido.' });
   }
   if (hasConflict(data, hora, id)) {
@@ -162,6 +162,31 @@ app.post('/api/despesas', (req, res) => {
     data,
   });
   res.status(201).json(nova);
+});
+
+// Group routes must come before /:id to avoid matching 'grupo' as an id
+app.delete('/api/despesas/grupo/:grupo_id', (req, res) => {
+  const grupo_id = parseInt(req.params.grupo_id, 10);
+  if (isNaN(grupo_id)) return res.status(400).json({ error: 'ID de grupo inválido.' });
+  deleteDespesasByGrupo(grupo_id);
+  res.json({ success: true });
+});
+
+app.put('/api/despesas/grupo/:grupo_id', (req, res) => {
+  const grupo_id = parseInt(req.params.grupo_id, 10);
+  if (isNaN(grupo_id)) return res.status(400).json({ error: 'ID de grupo inválido.' });
+  const err = validarDespesa(req.body, res);
+  if (err) return err;
+  const { nome, valor, forma_pagamento, parcelas, local, data } = req.body;
+  const resultado = updateDespesaGrupo(grupo_id, {
+    nome: nome.trim(),
+    valor: parseFloat(valor),
+    forma_pagamento,
+    parcelas: forma_pagamento === 'credito' ? parseInt(parcelas) : null,
+    local: local ? local.trim() : null,
+    data,
+  });
+  res.json(resultado);
 });
 
 app.put('/api/despesas/:id', (req, res) => {

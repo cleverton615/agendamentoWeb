@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+
 export default function EditModal({ agendamento, onSave, onClose }) {
   const [form, setForm] = useState({
     nome: agendamento.nome,
@@ -98,10 +99,13 @@ export default function EditModal({ agendamento, onSave, onClose }) {
               <label htmlFor="edit-tipo">Tipo</label>
               <select id="edit-tipo" name="tipo" value={form.tipo} onChange={handleChange}>
                 <option value="">— Selecione —</option>
-                <option value="social">Maquiagem social</option>
-                <option value="noiva">Noiva</option>
-                <option value="infantil">Infantil</option>
-                <option value="curso">Curso de auto maquiagem</option>
+                <option value="maquiagem">Maquiagem</option>
+                <option value="penteado">Penteado</option>
+                <option value="unhas">Unhas</option>
+                <option value="epilacao">Epilação</option>
+                <option value="sobrancelhas">Sobrancelhas</option>
+                <option value="cabeleireira">Cabeleireira</option>
+                <option value="barbeiro">Barbeiro</option>
               </select>
             </div>
           </div>
@@ -130,7 +134,7 @@ export default function EditModal({ agendamento, onSave, onClose }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="edit-valor_maquiagem">Valor da maquiagem</label>
+            <label htmlFor="edit-valor_maquiagem">Valor</label>
             <div className="input-currency-wrap">
               <span className="currency-prefix">R$</span>
               <input
@@ -183,10 +187,18 @@ export default function EditModal({ agendamento, onSave, onClose }) {
                   checked={form.penteado}
                   onChange={handleChange}
                 />
-                Penteado solicitado
+                Serviço agregado
               </label>
               {form.penteado && (
                 <div className="penteado-extras">
+                  <input
+                    name="nome_penteadista"
+                    type="text"
+                    placeholder="Nome do serviço (ex: Penteado noiva, Manicure...)"
+                    value={form.nome_penteadista}
+                    onChange={handleChange}
+                    className="input-penteadista"
+                  />
                   <div className="valor-adiantamento">
                     <span className="currency-prefix">R$</span>
                     <input
@@ -200,14 +212,6 @@ export default function EditModal({ agendamento, onSave, onClose }) {
                       className="input-valor"
                     />
                   </div>
-                  <input
-                    name="nome_penteadista"
-                    type="text"
-                    placeholder="Nome da penteadista"
-                    value={form.nome_penteadista}
-                    onChange={handleChange}
-                    className="input-penteadista"
-                  />
                   <div className="checkbox-with-value">
                     <label className="checkbox-group">
                       <input

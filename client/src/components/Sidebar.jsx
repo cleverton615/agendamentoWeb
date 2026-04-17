@@ -5,7 +5,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-brand">
         <span className="sidebar-brand-icon">✦</span>
-        <span className="sidebar-brand-text">Maquiagem</span>
+        <span className="sidebar-brand-text">Agenda de serviços</span>
       </div>
 
       <nav className="sidebar-nav">
