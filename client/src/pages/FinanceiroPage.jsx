@@ -8,13 +8,13 @@ const API_BASE = 'http://localhost:3001/api'
 const MESES_LABEL = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
 const SERVICOS = [
-  { key: 'maquiagem',   label: 'Maquiagem',    cor: '#c97b84' },
-  { key: 'penteado',    label: 'Penteado',      cor: '#7a4d8a' },
-  { key: 'unhas',       label: 'Unhas',         cor: '#e05c8a' },
-  { key: 'epilacao',    label: 'Epilação',      cor: '#d4846a' },
-  { key: 'sobrancelhas',label: 'Sobrancelhas',  cor: '#9c6b30' },
-  { key: 'cabeleireira',label: 'Cabeleireira',  cor: '#4a7c59' },
-  { key: 'barbeiro',    label: 'Barbeiro',      cor: '#3a6080' },
+  { key: 'maquiagem',    label: 'Maquiagem',    cor: '#c97b84' },
+  { key: 'penteado',     label: 'Penteado',      cor: '#7a4d8a' },
+  { key: 'unhas',        label: 'Unhas',         cor: '#e05c8a' },
+  { key: 'epilacao',     label: 'Epilação',      cor: '#d4846a' },
+  { key: 'sobrancelhas', label: 'Sobrancelhas',  cor: '#9c6b30' },
+  { key: 'cabeleireira', label: 'Cabeleireira',  cor: '#4a7c59' },
+  { key: 'barbeiro',     label: 'Barbeiro',      cor: '#3a6080' },
 ]
 
 function fmt(valor) {
@@ -66,6 +66,7 @@ export default function FinanceiroPage() {
   const anoAtual = new Date().getFullYear()
   const [anoFiltro, setAnoFiltro] = useState(anoAtual)
   const [mesFiltro, setMesFiltro] = useState('')
+  const [tipoFiltro, setTipoFiltro] = useState('')
 
   useEffect(() => {
     setLoading(true)
@@ -87,17 +88,16 @@ export default function FinanceiroPage() {
       const [ano, mes] = a.data.split('-')
       if (parseInt(ano) !== anoFiltro) return false
       if (mesFiltro !== '' && parseInt(mes) !== parseInt(mesFiltro)) return false
+      if (tipoFiltro !== '' && a.tipo !== tipoFiltro) return false
       return true
     })
-  }, [agendamentos, anoFiltro, mesFiltro])
+  }, [agendamentos, anoFiltro, mesFiltro, tipoFiltro])
 
-  // Somente realizados entram no fechamento de maquiagem e penteado
   const realizados = useMemo(
     () => filtrados.filter(a => a.status === 'realizado'),
     [filtrados]
   )
 
-  // Cancelados que têm adiantamento retido
   const canceladosComAdiantamento = useMemo(
     () => filtrados.filter(a =>
       a.status === 'cancelado' && (
@@ -108,19 +108,16 @@ export default function FinanceiroPage() {
     [filtrados]
   )
 
-  // Totais por tipo de serviço (campo valor_maquiagem é o valor principal do serviço)
   const totaisPorTipo = useMemo(() => {
     return SERVICOS.map(s => ({
       ...s,
       total: realizados.filter(a => a.tipo === s.key).reduce((acc, a) => acc + (a.valor_maquiagem ?? 0), 0),
       count: realizados.filter(a => a.tipo === s.key).length,
-    })).filter(s => s.count > 0 || realizados.some(a => a.tipo === s.key))
+    }))
   }, [realizados])
 
-  // Serviços com pelo menos 1 atendimento realizado no período
   const totaisPorTipoAtivos = totaisPorTipo.filter(s => s.count > 0)
 
-  // Penteado como add-on (separado do serviço principal)
   const totalPenteadoAddon = realizados.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
   const countPenteadoAddon = realizados.filter(a => a.penteado && a.valor_penteado != null).length
 
@@ -131,32 +128,51 @@ export default function FinanceiroPage() {
   const totalServicos = totaisPorTipoAtivos.reduce((s, t) => s + t.total, 0)
   const totalGeral = totalServicos + totalPenteadoAddon + totalAdiantamentosRetidos
 
-  // Dados mensais para gráfico
+  // Tipos ativos no ano+tipo filtrados (para o gráfico)
+  const tiposAtivosNoAno = useMemo(() => {
+    return SERVICOS.filter(s =>
+      (tipoFiltro === '' || tipoFiltro === s.key) &&
+      agendamentos.some(a => {
+        const [ano] = a.data.split('-')
+        return parseInt(ano) === anoFiltro && a.tipo === s.key && a.status === 'realizado'
+      })
+    )
+  }, [agendamentos, anoFiltro, tipoFiltro])
+
+  // Dados mensais para gráfico (respeita tipoFiltro)
   const dadosMensais = useMemo(() => {
     return MESES_LABEL.map((mes, idx) => {
       const mesNum = idx + 1
       const realizadosDoMes = agendamentos.filter(a => {
         const [ano, m] = a.data.split('-')
-        return parseInt(ano) === anoFiltro && parseInt(m) === mesNum && a.status === 'realizado'
+        const tipoOk = tipoFiltro === '' || a.tipo === tipoFiltro
+        return parseInt(ano) === anoFiltro && parseInt(m) === mesNum && a.status === 'realizado' && tipoOk
       })
       const canceladosDoMes = agendamentos.filter(a => {
         const [ano, m] = a.data.split('-')
+        const tipoOk = tipoFiltro === '' || a.tipo === tipoFiltro
         return (
-          parseInt(ano) === anoFiltro && parseInt(m) === mesNum &&
+          parseInt(ano) === anoFiltro && parseInt(m) === mesNum && tipoOk &&
           a.status === 'cancelado' && (
             (a.adiantamento && a.valor_adiantamento != null) ||
             (a.adiantamento_penteado && a.valor_adiantamento_penteado != null)
           )
         )
       })
-      const servicos = realizadosDoMes.reduce((s, a) => s + (a.valor_maquiagem ?? 0), 0)
+      const porTipo = {}
+      SERVICOS.forEach(s => {
+        porTipo[s.key] = realizadosDoMes
+          .filter(a => a.tipo === s.key)
+          .reduce((acc, a) => acc + (a.valor_maquiagem ?? 0), 0)
+      })
       const penteadoAddon = realizadosDoMes.reduce((s, a) => s + (a.valor_penteado ?? 0), 0)
       const retidos = canceladosDoMes.reduce(
         (s, a) => s + (a.valor_adiantamento ?? 0) + (a.valor_adiantamento_penteado ?? 0), 0
       )
-      return { mes, servicos, penteadoAddon, retidos, total: servicos + penteadoAddon + retidos }
+      const totalServicos = Object.values(porTipo).reduce((s, v) => s + v, 0)
+      return { mes, ...porTipo, penteadoAddon, retidos, total: totalServicos + penteadoAddon + retidos }
     })
-  }, [agendamentos, anoFiltro])
+  }, [agendamentos, anoFiltro, tipoFiltro])
 
   return (
     <div className="page-content">
@@ -176,6 +192,15 @@ export default function FinanceiroPage() {
             <option value="">Todos</option>
             {MESES_LABEL.map((m, i) => (
               <option key={i} value={i + 1}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div className="fin-filter-group">
+          <label htmlFor="fil-tipo">Tipo</label>
+          <select id="fil-tipo" value={tipoFiltro} onChange={e => setTipoFiltro(e.target.value)}>
+            <option value="">Todos</option>
+            {SERVICOS.map(s => (
+              <option key={s.key} value={s.key}>{s.label}</option>
             ))}
           </select>
         </div>
@@ -236,9 +261,11 @@ export default function FinanceiroPage() {
                       width={60}
                     />
                     <Tooltip content={<TooltipPersonalizado />} />
-                    <Bar dataKey="servicos" name="Serviços" fill="#c97b84" radius={[4, 4, 0, 0]} maxBarSize={30} stackId="a" />
-                    <Bar dataKey="penteadoAddon" name="Serviço agregado" fill="#7a4d8a" radius={[0, 0, 0, 0]} maxBarSize={30} stackId="a" />
-                    <Bar dataKey="retidos" name="Adiant. retidos" fill="#e8a020" radius={[4, 4, 0, 0]} maxBarSize={30} stackId="a" />
+                    {tiposAtivosNoAno.map(s => (
+                      <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.cor} radius={[3, 3, 0, 0]} maxBarSize={30} stackId="a" />
+                    ))}
+                    <Bar dataKey="penteadoAddon" name="Serviço agregado" fill="#7a4d8a" radius={[3, 3, 0, 0]} maxBarSize={30} stackId="a" />
+                    <Bar dataKey="retidos" name="Adiant. retidos" fill="#e8a020" radius={[3, 3, 0, 0]} maxBarSize={30} stackId="a" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -264,7 +291,7 @@ export default function FinanceiroPage() {
                       <th>Nome</th>
                       <th>Data</th>
                       <th>Adiant. serviço</th>
-                      <th>Adiant. penteado</th>
+                      <th>Adiant. serviço agr.</th>
                       <th>Total retido</th>
                     </tr>
                   </thead>

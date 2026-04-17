@@ -420,10 +420,10 @@
       "valor_adiantamento": null,
       "penteado": true,
       "valor_penteado": 10,
-      "nome_penteadista": "Elenise",
+      "nome_penteadista": "Penteado",
       "adiantamento_penteado": false,
       "valor_adiantamento_penteado": null,
-      "observacoes": null,
+      "observacoes": "Penteado feito por Elenise",
       "status": "realizado"
     },
     {
